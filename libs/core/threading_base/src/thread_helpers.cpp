@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2022 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //  Copyright (c)      2011 Bryce Lelbach
 //
 //  SPDX-License-Identifier: BSL-1.0
@@ -98,6 +98,9 @@ namespace hpx::threads {
 
     void interrupt_thread(thread_id_type const& id, bool flag, error_code& ec)
     {
+        // Copy id as the original `id` may get reset by the caller
+        // asynchronously.
+        auto const keep_alive = id;
         if (HPX_UNLIKELY(!id))
         {
             HPX_THROWS_IF(ec, hpx::error::null_thread_id,
@@ -112,7 +115,7 @@ namespace hpx::threads {
 
         // Set thread state to pending. If the thread is currently active we do
         // not retry. The thread will either exit or hit an interruption_point.
-        set_thread_state(id, thread_schedule_state::pending,
+        set_thread_state(keep_alive, thread_schedule_state::pending,
             thread_restart_state::abort, thread_priority::normal, false, ec);
     }
 
@@ -294,7 +297,10 @@ namespace hpx::threads {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////
-    static thread_local std::size_t continuation_recursion_count(0);
+    namespace {
+
+        thread_local std::size_t continuation_recursion_count(0);
+    }
 
     std::size_t& get_continuation_recursion_count() noexcept
     {
@@ -619,14 +625,15 @@ namespace hpx::this_thread {
             return false;
 
 #if defined(HPX_HAVE_THREADS_GET_STACK_POINTER)
-        std::ptrdiff_t remaining_stack = get_available_stack_space();
+        std::ptrdiff_t const remaining_stack = get_available_stack_space();
         if (remaining_stack < 0)
         {
             HPX_THROW_EXCEPTION(hpx::error::out_of_memory,
                 "has_sufficient_stack_space", "Stack overflow");
         }
-        bool sufficient_stack_space =
-            std::size_t(remaining_stack) >= space_needed;
+
+        bool const sufficient_stack_space =
+            static_cast<std::size_t>(remaining_stack) >= space_needed;
 
         return sufficient_stack_space;
 #else

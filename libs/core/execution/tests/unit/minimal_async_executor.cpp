@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2022 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -23,6 +23,16 @@
 #include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////
+template <typename Executor>
+decltype(auto) disable_run_as_child(Executor&& exec)
+{
+    auto hint = hpx::execution::experimental::get_hint(exec);
+    hint.runs_as_child_mode(hpx::threads::thread_execution_hint::none);
+
+    return hpx::experimental::prefer(hpx::execution::experimental::with_hint,
+        HPX_FORWARD(Executor, exec), hint);
+}
+
 hpx::thread::id async_test(int passed_through)
 {
     HPX_TEST_EQ(passed_through, 42);
@@ -36,7 +46,8 @@ void apply_test(hpx::latch& l, hpx::thread::id& id, int passed_through)
     l.count_down(1);
 }
 
-void async_bulk_test(int, hpx::thread::id tid, int passed_through)    //-V813
+void async_bulk_test(
+    int, hpx::thread::id const& tid, int passed_through)    //-V813
 {
     HPX_TEST_NEQ(tid, hpx::this_thread::get_id());
     HPX_TEST_EQ(passed_through, 42);
@@ -57,14 +68,14 @@ void test_apply(Executor& exec)
 }
 
 template <typename Executor>
-void test_sync(Executor& exec)
+void test_sync(Executor&& exec)
 {
     HPX_TEST(hpx::parallel::execution::sync_execute(exec, &async_test, 42) !=
         hpx::this_thread::get_id());
 }
 
 template <typename Executor>
-void test_async(Executor& exec)
+void test_async(Executor&& exec)
 {
     HPX_TEST(
         hpx::parallel::execution::async_execute(exec, &async_test, 42).get() !=
@@ -72,7 +83,7 @@ void test_async(Executor& exec)
 }
 
 template <typename Executor>
-void test_bulk_sync(Executor& exec)
+void test_bulk_sync(Executor&& exec)
 {
     hpx::thread::id tid = hpx::this_thread::get_id();
 
@@ -89,7 +100,7 @@ void test_bulk_sync(Executor& exec)
 }
 
 template <typename Executor>
-void test_bulk_async(Executor& exec)
+void test_bulk_async(Executor&& exec)
 {
     hpx::thread::id tid = hpx::this_thread::get_id();
 
@@ -128,7 +139,7 @@ void test_executor(std::array<std::size_t, 5> expected)
     count_bulk_sync.store(0);
     count_bulk_async.store(0);
 
-    Executor exec;
+    auto exec = disable_run_as_child(Executor());
 
     test_apply(exec);
     test_sync(exec);
@@ -158,12 +169,11 @@ struct test_async_executor1
     }
 };
 
-namespace hpx::parallel::execution {
-    template <>
-    struct is_two_way_executor<test_async_executor1> : std::true_type
-    {
-    };
-}    // namespace hpx::parallel::execution
+template <>
+struct hpx::parallel::execution::is_two_way_executor<test_async_executor1>
+  : std::true_type
+{
+};
 
 struct test_async_executor2 : test_async_executor1
 {
@@ -180,12 +190,11 @@ struct test_async_executor2 : test_async_executor1
     }
 };
 
-namespace hpx::parallel::execution {
-    template <>
-    struct is_two_way_executor<test_async_executor2> : std::true_type
-    {
-    };
-}    // namespace hpx::parallel::execution
+template <>
+struct hpx::parallel::execution::is_two_way_executor<test_async_executor2>
+  : std::true_type
+{
+};
 
 struct test_async_executor3 : test_async_executor1
 {
@@ -206,12 +215,11 @@ struct test_async_executor3 : test_async_executor1
     }
 };
 
-namespace hpx::parallel::execution {
-    template <>
-    struct is_two_way_executor<test_async_executor3> : std::true_type
-    {
-    };
-}    // namespace hpx::parallel::execution
+template <>
+struct hpx::parallel::execution::is_two_way_executor<test_async_executor3>
+  : std::true_type
+{
+};
 
 struct test_async_executor4 : test_async_executor1
 {
@@ -257,12 +265,11 @@ struct test_async_executor5 : test_async_executor1
     }
 };
 
-namespace hpx::parallel::execution {
-    template <>
-    struct is_two_way_executor<test_async_executor5> : std::true_type
-    {
-    };
-}    // namespace hpx::parallel::execution
+template <>
+struct hpx::parallel::execution::is_two_way_executor<test_async_executor5>
+  : std::true_type
+{
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 int hpx_main()
@@ -278,7 +285,7 @@ int hpx_main()
 
 int main(int argc, char* argv[])
 {
-    // By default this test should run on all available cores
+    // By default, this test should run on all available cores
     std::vector<std::string> const cfg = {"hpx.os_threads=all"};
 
     // Initialize and run HPX

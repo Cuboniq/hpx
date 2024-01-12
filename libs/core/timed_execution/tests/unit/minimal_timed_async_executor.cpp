@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2022 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -39,7 +39,7 @@ void apply_test(hpx::latch& l, hpx::thread::id& id, int passed_through)
 
 ///////////////////////////////////////////////////////////////////////////////
 template <typename Executor>
-void test_timed_apply(Executor& exec)
+void test_timed_apply(Executor&& exec)
 {
     {
         hpx::latch l(2);
@@ -73,7 +73,7 @@ void test_timed_apply(Executor& exec)
 }
 
 template <typename Executor>
-void test_timed_sync(Executor& exec)
+void test_timed_sync(Executor&& exec)
 {
     {
         hpx::parallel::execution::timed_executor<Executor> timed_exec(
@@ -93,7 +93,7 @@ void test_timed_sync(Executor& exec)
 }
 
 template <typename Executor>
-void test_timed_async(Executor& exec)
+void test_timed_async(Executor&& exec)
 {
     {
         hpx::parallel::execution::timed_executor<Executor> timed_exec(
@@ -122,13 +122,23 @@ std::atomic<std::size_t> count_apply_at(0);
 std::atomic<std::size_t> count_async_at(0);
 
 template <typename Executor>
+decltype(auto) disable_run_as_child(Executor&& exec)
+{
+    auto hint = hpx::execution::experimental::get_hint(exec);
+    hint.runs_as_child_mode(hpx::threads::thread_execution_hint::none);
+
+    return hpx::experimental::prefer(hpx::execution::experimental::with_hint,
+        HPX_FORWARD(Executor, exec), hint);
+}
+
+template <typename Executor>
 void test_timed_executor(std::array<std::size_t, 6> expected)
 {
-    typedef typename hpx::traits::executor_execution_category<Executor>::type
-        execution_category;
+    using execution_category =
+        typename hpx::traits::executor_execution_category<Executor>::type;
 
-    HPX_TEST((std::is_same<hpx::execution::parallel_execution_tag,
-        execution_category>::value));
+    HPX_TEST((std::is_same_v<hpx::execution::parallel_execution_tag,
+        execution_category>) );
 
     count_sync.store(0);
     count_apply.store(0);
@@ -137,7 +147,7 @@ void test_timed_executor(std::array<std::size_t, 6> expected)
     count_apply_at.store(0);
     count_async_at.store(0);
 
-    Executor exec;
+    auto exec = disable_run_as_child(Executor());
 
     test_timed_apply(exec);
     test_timed_sync(exec);
@@ -154,7 +164,7 @@ void test_timed_executor(std::array<std::size_t, 6> expected)
 ///////////////////////////////////////////////////////////////////////////////
 struct test_async_executor1
 {
-    typedef hpx::execution::parallel_execution_tag execution_category;
+    using execution_category = hpx::execution::parallel_execution_tag;
 
     template <typename F, typename... Ts>
     friend decltype(auto) tag_invoke(hpx::parallel::execution::async_execute_t,
@@ -285,7 +295,7 @@ int hpx_main()
 
 int main(int argc, char* argv[])
 {
-    // By default this test should run on all available cores
+    // By default, this test should run on all available cores
     std::vector<std::string> const cfg = {"hpx.os_threads=all"};
 
     // Initialize and run HPX
