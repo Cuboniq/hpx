@@ -54,7 +54,7 @@ if(NOT TARGET Asio::asio)
     # Extracts the dotted version number after the comment as
     # Asio_VERSION_STRING
     string(REGEX
-           REPLACE "#define ASIO_VERSION [0-9]+ // ([0-9]+\.[0-9]+\.[0-9]+)"
+           REPLACE "#define BOOST_ASIO_VERSION [0-9]+ // ([0-9]+\.[0-9]+\.[0-9]+)"
                    "\\1" Asio_VERSION_STRING "${Asio_VERSION_DEFINE_LINE}"
     )
   endif()
