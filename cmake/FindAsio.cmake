@@ -49,7 +49,7 @@ if(NOT TARGET Asio::asio)
     file(
       STRINGS "${Asio_INCLUDE_DIR}/asio/version.hpp" Asio_VERSION_DEFINE_LINE
       REGEX
-        "#define[ \t]+ASIO_VERSION[ \t]+[0-9]+[ \t]+//[ \t]+[0-9]+\.[0-9]+\.[0-9]+[ \t]*"
+        "#define[ \t]+BOOST_ASIO_VERSION[ \t]+[0-9]+[ \t]+//[ \t]+[0-9]+\.[0-9]+\.[0-9]+[ \t]*"
     )
     # Extracts the dotted version number after the comment as
     # Asio_VERSION_STRING
