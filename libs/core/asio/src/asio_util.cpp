@@ -53,7 +53,7 @@ namespace hpx::util {
         asio::ip::tcp::endpoint& ep, bool force_ipv4)
     {
         using namespace asio::ip;
-        std::error_code ec;
+        system::error_code ec;
         address_v4 const addr4 =    //-V821
             address_v4::from_string(addr.c_str(), ec);
         if (!ec)

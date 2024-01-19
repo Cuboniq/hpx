@@ -145,7 +145,7 @@ namespace hpx::parcelset::policies::tcp {
         }
         if (acceptor_ != nullptr)
         {
-            std::error_code ec;
+            system::error_code ec;
             acceptor_->close(ec);
             delete acceptor_;
             acceptor_ = nullptr;
@@ -162,7 +162,7 @@ namespace hpx::parcelset::policies::tcp {
         auto sender_connection = std::make_shared<sender>(io_service, l, this);
 
         // Connect to the target locality, retry if needed
-        std::error_code error = asio::error::try_again;
+        system::error_code error = asio::error::try_again;
         for (std::size_t i = 0; i < HPX_MAX_NETWORK_RETRIES; ++i)
         {
             // The acceptor is only nullptr when the parcelport has been stopped.
@@ -281,10 +281,11 @@ namespace hpx::parcelset::policies::tcp {
 
     // accepted new incoming connection
     void connection_handler::handle_accept(
-        std::error_code const& e, std::shared_ptr<receiver> receiver_conn)
+        system::error_code const& e, std::shared_ptr<receiver> receiver_conn)
     {
         if (!e)
         {
+            
             // handle this incoming connection
             std::shared_ptr<receiver> c(receiver_conn);
 
@@ -320,7 +321,7 @@ namespace hpx::parcelset::policies::tcp {
     }
 
     // Handle completion of a read operation.
-    void connection_handler::handle_read_completion(std::error_code const& e,
+    void connection_handler::handle_read_completion(system::error_code const& e,
         std::shared_ptr<receiver> const& receiver_conn)
     {
         if (!e)

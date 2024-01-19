@@ -110,9 +110,9 @@ namespace hpx::parcelset {
             parcelset::locality create_locality() const override;
 
         private:
-            void handle_accept(std::error_code const& e,
+            void handle_accept(system::error_code const& e,
                 std::shared_ptr<receiver> receiver_conn);
-            void handle_read_completion(std::error_code const& e,
+            void handle_read_completion(system::error_code const& e,
                 std::shared_ptr<receiver> const& receiver_conn);
 
             /// Acceptor used to listen for incoming connections.

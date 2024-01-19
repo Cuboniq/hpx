@@ -145,7 +145,7 @@ namespace hpx::parcelset::policies::tcp {
             // gracefully and portably shutdown the socket
             if (socket_.is_open())
             {
-                std::error_code ec;
+                system::error_code ec;
                 socket_.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 
                 // close the socket to give it back to the OS

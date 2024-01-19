@@ -12,7 +12,7 @@
 #include <winsock2.h>
 #endif
 
-namespace asio {
+namespace boost::asio {
 
     // forward declaration
     class io_context;
