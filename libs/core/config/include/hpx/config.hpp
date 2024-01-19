@@ -438,4 +438,6 @@
 #  define HPX_HAVE_MAX_CPU_COUNT 256
 #endif
 
+#include <boost/asio.hpp>
+using namespace boost;
 // clang-format on
